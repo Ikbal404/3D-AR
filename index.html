@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WebXR Markerless Patung - Fix</title>
+    
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+
+    <style>
+        body { margin: 0; overflow: hidden; }
+        
+        /* CSS untuk Tombol "Mulai AR" */
+        #ar-button {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 25px;
+            font-size: 1.2em;
+            background-color: #4CAF50; /* Warna Hijau Khas */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 9999;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Menyembunyikan tombol setelah AR berhasil dimulai (Class a-enter-ar ditambahkan A-Frame) */
+        .a-enter-ar #ar-button {
+            display: none;
+        }
+    </style>
+</head>
+
+<body style='margin: 0px; overflow: hidden;'>
+
+    <script>
+        AFRAME.registerComponent('ar-hit-test-placer', {
+            init: function () {
+                const el = this.el;
+                const reticle = document.getElementById('reticle');
+                const model = document.getElementById('patung-model');
+                let modelPlaced = false;
+
+                // Logika Klik/Tap untuk Menempatkan Model
+                el.sceneEl.addEventListener('click', (e) => {
+                    // Hanya tempatkan model satu kali
+                    if (modelPlaced) return;
+
+                    // Ambil posisi reticle saat ini
+                    const position = reticle.getAttribute('position');
+
+                    // Posisikan dan tampilkan model
+                    model.setAttribute('position', position);
+                    model.setAttribute('visible', true);
+                    model.setAttribute('animation', { enabled: true });
+                    
+                    // Sembunyikan reticle
+                    reticle.setAttribute('visible', false);
+                    modelPlaced = true;
+                });
+                
+                // Logika Hit-Test (deteksi permukaan)
+                el.sceneEl.addEventListener('ar-hit-test-update', (event) => {
+                    if (modelPlaced) return;
+                    
+                    const hit = event.detail.hit;
+
+                    if (hit) {
+                        // Jika ada hit, atur posisi reticle
+                        reticle.setAttribute('position', hit.position);
+                        reticle.setAttribute('visible', true);
+                    } else {
+                        // Jika tidak ada hit, sembunyikan reticle
+                        reticle.setAttribute('visible', false);
+                    }
+                });
+
+                // Reset status saat keluar dari mode AR
+                el.sceneEl.addEventListener('exit-ar', () => {
+                    modelPlaced = false;
+                    model.setAttribute('visible', false);
+                    reticle.setAttribute('visible', false);
+                });
+            }
+        });
+    </script>
+    
+    <a-scene 
+        renderer="logarithmicDepthBuffer: true" 
+        vr-mode-ui="enabled: false"
+        
+        ar-mode="mode: looking"
+    >
+
+        <a-entity ar-hit-test-placer>
+
+            <a-entity
+                id="patung-model"
+                gltf-model="url(https://cdn.aframe.io/models/glTF/reticle/reticle.gltf)" 
+                scale="0.2 0.2 0.2" /* Sesuaikan ukuran ini jika terlalu besar/kecil */
+                visible="false"  
+                rotation="0 0 0"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 5000; easing: linear; enabled: false"
+            ></a-entity>
+
+            <a-ring 
+                id="reticle"
+                color="#00FF99" 
+                radius-inner="0.03"
+                radius-outer="0.05"
+                rotation="-90 0 0" /* Tegakkan di permukaan horizontal */
+                visible="false"
+            ></a-ring>
+
+        </a-entity>
+
+        <a-camera></a-camera>
+        
+    </a-scene>
+
+    <button id="ar-button" onclick="document.querySelector('a-scene').enterAR()">
+        Mulai AR (Surface Tracking)
+    </button>
+</body>
+</html>
