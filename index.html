@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Patung AR/VR Markerless - Fix Aset</title>
+    
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+
+    <style>
+        body { margin: 0; overflow: hidden; }
+        /* CSS tombol tetap sama */
+        #ar-button {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            padding: 12px 25px; font-size: 1.2em; background-color: #4CAF50; 
+            color: white; border: none; border-radius: 8px; cursor: pointer; z-index: 9999;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .a-enter-ar #ar-button { display: none; }
+    </style>
+</head>
+
+<body style='margin: 0px; overflow: hidden;'>
+
+    <script>
+        AFRAME.registerComponent('ar-hit-test-placer', {
+            init: function () {
+                const el = this.el;
+                const reticle = document.getElementById('reticle');
+                const model = document.getElementById('patung-model');
+                let modelPlaced = false;
+
+                // Logika Klik/Tap dan Hit-Test tetap sama...
+                el.sceneEl.addEventListener('click', (e) => {
+                    if (modelPlaced) return;
+                    const position = reticle.getAttribute('position');
+                    model.setAttribute('position', position);
+                    model.setAttribute('visible', true);
+                    model.setAttribute('animation', { enabled: true });
+                    reticle.setAttribute('visible', false);
+                    modelPlaced = true;
+                });
+                
+                el.sceneEl.addEventListener('ar-hit-test-update', (event) => {
+                    if (modelPlaced) return;
+                    const hit = event.detail.hit;
+                    if (hit) {
+                        reticle.setAttribute('position', hit.position);
+                        reticle.setAttribute('visible', true);
+                    } else {
+                        reticle.setAttribute('visible', false);
+                    }
+                });
+                
+                el.sceneEl.addEventListener('exit-ar', () => {
+                    modelPlaced = false;
+                    model.setAttribute('visible', false);
+                    reticle.setAttribute('visible', false);
+                });
+            }
+        });
+    </script>
+    
+    <a-scene 
+        renderer="logarithmicDepthBuffer: true" 
+        vr-mode-ui="enabled: true"
+        ar-mode="mode: looking"
+    >
+        <a-assets timeout="10000"> 
+            <a-asset-item id="patung-gltf" src="patung.glb"></a-asset-item>
+        </a-assets>
+
+        <a-entity ar-hit-test-placer>
+
+            <a-entity
+                id="patung-model"
+                gltf-model="url(#patung-gltf)" 
+                scale="0.2 0.2 0.2" 
+                visible="false"  
+                rotation="0 0 0"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 5000; easing: linear; enabled: false"
+            ></a-entity>
+
+            <a-ring 
+                id="reticle"
+                color="#00FF99" 
+                radius-inner="0.03"
+                radius-outer="0.05"
+                rotation="-90 0 0" 
+                visible="false"
+            ></a-ring>
+
+        </a-entity>
+
+        <a-camera></a-camera>
+        
+    </a-scene>
+
+    <button id="ar-button" onclick="document.querySelector('a-scene').enterAR()">
+        Mulai AR (Kamera)
+    </button>
+</body>
+</html>
