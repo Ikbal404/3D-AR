@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Patung AR Mode Look-at - Final</title>
+    
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+
+    <style>
+        body { margin: 0; overflow: hidden; }
+        
+        #ar-button {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            padding: 12px 25px; font-size: 1.2em; background-color: #4CAF50; 
+            color: white; border: none; border-radius: 8px; cursor: pointer; z-index: 9999;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .a-enter-ar #ar-button { display: none; }
+    </style>
+</head>
+
+<body style='margin: 0px; overflow: hidden;'>
+    
+    <a-scene 
+        renderer="logarithmicDepthBuffer: true" 
+        vr-mode-ui="enabled: true"
+        ar-mode="mode: looking"
+    >
+        
+        <a-assets timeout="10000"> 
+            <a-asset-item id="patung-gltf" src="patung.glb"></a-asset-item>
+        </a-assets>
+
+        <a-entity
+            id="patung-model"
+            gltf-model="url(#patung-gltf)"
+            
+            /* Gunakan POSISI dan SKALA yang sama dengan kubus */
+            position="0 0 -0.5" 
+            scale="0.3 0.3 0.3" /* Skala 0.3m x 0.3m (sama dengan kubus) */
+            
+            rotation="0 0 0"
+            animation="property: rotation; to: 0 360 0; loop: true; dur: 5000; easing: linear"
+        ></a-entity>
+
+        <a-camera></a-camera>
+        
+    </a-scene>
+
+    <button id="ar-button" onclick="document.querySelector('a-scene').enterAR()">
+        Mulai AR (Kamera)
+    </button>
+</body>
+</html>
